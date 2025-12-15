@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VZ Prüfung Quiz</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .mode-btn.all {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #1a1a2e;
+        }
+        .mode-btn.wrong {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+        }
+        .mode-btn.reset {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .mode-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .stats {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4facfe;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            height: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        .question-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #1a1a2e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .question-type {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            font-style: italic;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .answer-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .answer-btn:hover:not(.disabled) {
+            background: rgba(255,255,255,0.2);
+            border-color: #4facfe;
+        }
+        .answer-btn.selected {
+            background: rgba(79, 172, 254, 0.3);
+            border-color: #4facfe;
+        }
+        .answer-btn.correct {
+            background: rgba(46, 204, 113, 0.4);
+            border-color: #2ecc71;
+        }
+        .answer-btn.incorrect {
+            background: rgba(231, 76, 60, 0.4);
+            border-color: #e74c3c;
+        }
+        .answer-btn.disabled {
+            cursor: default;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #1a1a2e;
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        }
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result-message {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 1.1rem;
+        }
+        .result-message.correct {
+            background: rgba(46, 204, 113, 0.3);
+        }
+        .result-message.incorrect {
+            background: rgba(231, 76, 60, 0.3);
+        }
+        .final-score {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+        }
+        .final-score h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px auto;
+        }
+        .score-text {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .mode-btn { padding: 12px 20px; font-size: 1rem; }
+            .question-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VZ Prüfung Quiz</h1>
+
+        <div class="mode-selector">
+            <button class="mode-btn all" onclick="startQuiz('all')">Alle Fragen</button>
+            <button class="mode-btn wrong" onclick="startQuiz('wrong')" id="wrongBtn">Falsche Fragen</button>
+            <button class="mode-btn reset" onclick="resetProgress()">Reset</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalQuestions">34</div>
+                <div class="stat-label">Gesamt</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="correctCount">0</div>
+                <div class="stat-label">Richtig</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="wrongCount">0</div>
+                <div class="stat-label">Falsch</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="percentage">0%</div>
+                <div class="stat-label">Quote</div>
+            </div>
+        </div>
+
+        <div id="quizArea" class="hidden">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="questionContainer"></div>
+        </div>
+
+        <div id="finalScore" class="final-score hidden">
+            <h2>Quiz beendet!</h2>
+            <div class="score-circle">
+                <span class="score-text" id="finalScoreText">0%</span>
+            </div>
+            <p id="finalMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Welches Prinzip der DSGVO verlangt, dass Daten nur für festgelegte Zwecke verarbeitet werden?",
+                answers: ["Integrität & Vertraulichkeit", "Rechenschaftspflicht", "Datenminimierung", "Zweckbindung"],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche der folgenden Optionen ist KEINE gültige Rechtsgrundlage nach Art. 6 DSGVO?",
+                answers: ["Berechtigtes Interesse", "Rechtliche Verpflichtung", "Vertragserfüllung", "Profiling ohne Einwilligung"],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche Aussage zur Einwilligung in die Verarbeitung der Daten ist korrekt?",
+                answers: ["Einwilligung muss spezifisch und informiert sein", "Vorgekreuzte Kästchen sind gültig", "Schweigen bedeutet Zustimmung", "Einwilligung kann nicht widerrufen werden"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Was muss ein Verzeichnis der Verarbeitungstätigkeiten (VVT) enthalten?",
+                answers: ["Nur den Zweck der Verarbeitung", "Nur technische Maßnahmen", "Kategorien betroffener Personen", "Zwecke, Empfänger, Speicherfristen, TOMs (technische und organisatorische Maßnahmen)"],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche technische Maßnahme ist nach Art. 32 DSGVO erforderlich?",
+                answers: ["Verschlüsselung und Zugriffskontrolle", "Datenmonetarisierung", "Profiling und Pseudonymisierung", "Marketing-Automatisierung"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Innerhalb welcher Frist muss eine Datenpanne gemeldet werden?",
+                answers: ["24 Stunden", "7 Tage", "72 Stunden", "48 Stunden"],
+                correct: [2],
+                multi: false
+            },
+            {
+                question: "Welches Betroffenenrecht erlaubt die Löschung personenbezogener Daten?",
+                answers: ["Datenübertragbarkeit", "Recht auf Vergessenwerden", "Auskunftsrecht", "Widerspruchsrecht"],
+                correct: [1],
+                multi: false
+            },
+            {
+                question: "Was bedeutet 'Rechenschaftspflicht' nach DSGVO?",
+                answers: ["Nachweis der Einhaltung aller Datenschutzprinzipien", "Pflicht zur Löschung aller Daten", "Nur interne Dokumentation", "Pflicht zur Meldung jeder Verarbeitung"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Welches Prinzip gehört NICHT zu den sechs Säulen verantwortungsvoller KI?",
+                answers: ["Transparenz", "Fairness", "Menschliche Aufsicht", "Profitabilität"],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche Aussage zum Verhältnis AI Act und DSGVO ist korrekt?",
+                answers: ["AI Act ersetzt die DSGVO", "AI Act ist nur für nicht-personenbezogene Daten relevant", "DSGVO gilt nicht mehr für KI-Systeme", "AI Act ergänzt die DSGVO"],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche Zusatzinformationen müssen ins Firmenbuch eingetragene Unternehmer bereitstellen?",
+                answers: ["Höhe der Unternehmensgewinne", "Zutrittsberechtigte des Firmengebäudes", "Privatadresse aller Eigentümer", "Familienstand des Geschäftsführers", "Rechtsform und Sitz"],
+                correct: [4],
+                multi: false
+            },
+            {
+                question: "Was bestätigt eine automatische Nachricht wie 'Wir haben Ihre Bestellung erhalten'?",
+                answers: ["Den bloßen Zugang der Vertragserklärung des Verbrauchers beim Unternehmer", "Nur die Zahlungsabwicklung", "Eine Stornierung", "Den Versand der Ware", "Sofortige Vertragsannahme"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Welche Aussagen zum Rücktrittsrecht im Fernabsatz stimmen? (Mehrfachauswahl)",
+                answers: ["Es muss schriftlich ausgeübt werden", "Es entfällt bei digitalen Inhalten immer", "Es braucht keinen Grund", "Die Rücktrittsfrist beträgt 14 Tage", "Bei fehlender Belehrung verlängert es sich"],
+                correct: [2, 3, 4],
+                multi: true
+            },
+            {
+                question: "Wann kommt ein IT-Vertrag grundsätzlich zustande?",
+                answers: ["Erst nach Bezahlung der ersten Rechnung für die IT-Komponente", "Durch bloßes Interesse an einer Zusammenarbeit", "Durch übereinstimmende Willenserklärungen", "Sobald ein Angebot erstellt wurde", "Erst nach Abnahme der Software"],
+                correct: [2],
+                multi: false
+            },
+            {
+                question: "Was gehört – u.a. – zum Grundaufbau eines IT-Projekt-Vertrages? (Mehrfachauswahl)",
+                answers: ["die Feiertage im Staat, in dem das System dann betrieben wird", "die Lebensläufe aller Mitarbeitenden", "Liefer- und Leistungstermine, Leistungsänderungen und Change Requests", "die Beschreibung der Unternehmensstruktur des Auftraggebers", "die Projektorganisation, der Zeitplan und die Abnahmen"],
+                correct: [2, 4],
+                multi: true
+            },
+            {
+                question: "Was soll eine Projektdokumentation in einem IT-Projekt beinhalten? (Mehrfachauswahl)",
+                answers: ["Nur Beginn und Ende des IT-Projekts sowie die Endabnahme", "Nur das Pflichtenheft und die Endabnahme", "nur die Ergebnisse von Projektteambesprechungen, sonst nichts", "die Projektphasen, die Systemumgebung, die Abnahmen und die Inbetriebnahme", "auch Teilabnahmen, Mängelbehebungen, Tests und Testergebnisse"],
+                correct: [3, 4],
+                multi: true
+            },
+            {
+                question: "Welche Arten von Entgelten werden in Mietverträgen und Leasingverträgen über Hard- und Software vereinbart?",
+                answers: ["das Mietentgelt bzw. die Leasingrate", "der Kaufpreis", "der Stundensatz", "der Werklohn", "die Vertragsstrafe pro Tag des Verzugs"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Welche Rechte hat der Auftraggeber bei mangelhafter IT-Lieferung oder IT-Leistung? (Mehrfachauswahl)",
+                answers: ["Der Auftraggeber kann primär Verbesserung oder Nachlieferung fordern und muss dem Auftragnehmer dafür eine Nachfrist gewähren.", "Der Auftraggeber kann im Fall der mangelhaften Lieferung einer IT-Komponente diese ohne weiteres an den Lieferanten zurücksenden.", "Der Auftraggeber kann sofort Preisminderung verlangen.", "Der Auftraggeber kann sofort vom Vertrag zurücktreten.", "Der Auftraggeber kann erst nach Scheitern oder Unmöglichkeit der Verbesserung oder Nachlieferung Preisminderung oder die Auflösung des Vertrages fordern."],
+                correct: [0, 4],
+                multi: true
+            },
+            {
+                question: "Was gilt für ein Werknutzungsrecht und was für eine Werknutzungsbewilligung an Software? (Mehrfachauswahl)",
+                answers: ["Jeder hat ein Werknutzungsrecht an Software, die er im Internet herunterladen kann.", "Aufgrund einer Werknutzungsbewilligung kann die Software ohne jede Einschränkung genutzt werden.", "Das Werknutzungsrecht umfasst ein ausschließliches Nutzungsrecht an der Software.", "Die Werknutzungsbewilligung umfasst ein nicht ausschließliches Nutzungsrecht an der Software mit zeitlichen, räumlichen und sachlichen Beschränkungen.", "Ein Werknutzungsrecht unterscheidet sich gar nicht von einer Werknutzungsbewilligung."],
+                correct: [2, 3],
+                multi: true
+            },
+            {
+                question: "Auf wen gehen die Nutzungsrechte an entwickelten Computerprogrammen über? (Mehrfachauswahl)",
+                answers: ["auf den Hersteller der Software, auf deren Entwicklerversion die Programme entwickelt wurden", "auf den Dienstgeber, wenn der Programmierer angestellt ist, der Programmierer die Programme im Rahmen seiner Dienstpflichten entwickelt hat und nichts anderes vereinbart ist", "auf den Entwickler selbst, wenn er die Programme alleine entwickelt hat, er nicht angestellt ist und seine Rechte daran nicht übertragen hat", "auf den Eigentümer der Hardware, auf der die Programme entwickelt wurden", "auf den Vertragshändler, der die Software, auf deren Entwicklerversion die Programme entwickelt wurden, in diesem Staat in Verkehr gebracht hat"],
+                correct: [1, 2],
+                multi: true
+            },
+            {
+                question: "Was trifft für Open Source Software (kurz: OSS) zu? (Mehrfachauswahl)",
+                answers: ["Der Quellcode von OSS wird unverschlüsselt veröffentlicht.", "Nutzungsbeschränkungen von OSS sind grundsätzlich verboten.", "Jeder kann OSS nutzen und muss sich an keine Regeln halten.", "Softwareentwickler erhalten mit OSS wichtige Werkzeuge zum Programmieren.", "OSS dient nur der Steuerung von Kraftwerken."],
+                correct: [0, 3],
+                multi: true
+            },
+            {
+                question: "Was trifft für Lizenzrechte in Softwareüberlassungsverträgen zu?",
+                answers: ["Jeder kann Software herunterladen und die Lizenzrechte daran verkaufen.", "Der Lizenzgeber räumt dem Lizenznehmer nur die Nutzung der Software zu den Bedingungen laut Vertrag ein.", "Die Lizenzrechte schließen automatisch die Wartung ein.", "Lizenzrechte gelten immer unbefristet.", "Der Lizenzgeber überträgt mit den Lizenzrechten automatisch das Eigentum an der Software."],
+                correct: [1],
+                multi: false
+            },
+            {
+                question: "Welche der folgenden Angaben kann eine Marke sein?",
+                answers: ["Wörter, Farben, Klänge, Formen u.a.", "Nur Wörter", "Nur Zahlen", "Nur Personennamen", "Nur Grafiken"],
+                correct: [0],
+                multi: false
+            },
+            {
+                question: "Welche Kriterien werden bei der Verwechslungsgefahr geprüft? (Mehrfachauswahl)",
+                answers: ["Bekanntheit der Marke", "Zeichenähnlichkeit", "Identität des Geschäftsführers", "Firmenstandort", "Waren-/Dienstleistungsähnlichkeit"],
+                correct: [1, 4],
+                multi: true
+            },
+            {
+                question: "Welche Aussagen zur Schutzdauer von Marken sind richtig? (Mehrfachauswahl)",
+                answers: ["Der Schutz gilt unbegrenzt.", "Sie kann beliebig oft verlängert werden.", "Sie beträgt 10 Jahre.", "Verlängerungen der Schutzdauer lösen eine Gebühr aus.", "Sie endet nach 50 Jahren automatisch."],
+                correct: [1, 2, 3],
+                multi: true
+            },
+            {
+                question: "Welche Ansprüche stehen bei Markenverletzungen im Zivilrecht zur Verfügung? (Mehrfachauswahl)",
+                answers: ["Beseitigung", "Unterlassung", "Schadenersatz", "Strafanzeige", "Urteilsveröffentlichung"],
+                correct: [0, 1, 2, 4],
+                multi: true
+            },
+            {
+                question: "Was versteht man unter 'Domaingrabbing'?",
+                answers: ["Kauf von Domains durch Behörden", "Registrierung generischer Domains", "Registrierung fremder Kennzeichen als Domains zur Vermarktung oder Blockade", "Schutz der eigenen Domain vor Angriffen", "Automatisches Registrieren von freien Domains"],
+                correct: [2],
+                multi: false
+            },
+            {
+                question: "Was trifft für eine elektronische Signatur zu?",
+                answers: ["Eine elektronische Signatur kann nur mit einem Smartphone erstellt werden.", "Jedes Dokument mit einer Unterschrift im PDF enthält eine elektronische Signatur.", "Eine natürliche Person, die eine elektronische Signatur erstellt, heißt Urheber.", "Eine elektronische Signatur besteht aus Daten in elektronischer Form und wird anderen elektronischen Daten beigefügt oder logisch mit ihnen verbunden."],
+                correct: [3],
+                multi: false
+            },
+            {
+                question: "Welche der folgenden sind qualifizierte Stellen für Signaturen und Vertrauensdienste?",
+                answers: ["das Bundesministerium für Finanzen", "die E-Control Austria", "die RTR – Rundfunk und Telekom Regulierungs-GmbH"],
+                correct: [2],
+                multi: false
+            },
+            {
+                question: "Welche Voraussetzungen muss ein Werk erfüllen, um urheberrechtlich geschützt zu sein? (Mehrfachauswahl)",
+                answers: ["Eigentümlichkeit", "Geistigkeit", "Schöpfung (mit Wahrnehmbarkeit)", "Registrierung im Urheberregister", "Veröffentlichung des Werks"],
+                correct: [0, 1, 2],
+                multi: true
+            },
+            {
+                question: "Welche Aussage über Computerprogramme ist korrekt?",
+                answers: ["Sie gelten als Tonkunstwerke.", "Sie können nur körperlich verbreitet werden.", "Ihr Schutz umfasst ausschließlich die grafische Benutzeroberfläche.", "Sie benötigen zwingend eine Anmeldung beim Patentamt.", "Sie sind als Sprachwerke geschützt."],
+                correct: [4],
+                multi: false
+            },
+            {
+                question: "Wer kann Urheber eines Werks sein?",
+                answers: ["Nur juristische Personen", "Jede natürliche Person", "Jede Person mit Staatsbürgerschaft im EWR", "Nur Personen über 18 Jahren", "Nur Angestellte im Rahmen ihrer Dienstverhältnisse"],
+                correct: [1],
+                multi: false
+            },
+            {
+                question: "Wie lange dauert der urheberrechtliche Schutz grundsätzlich an?",
+                answers: ["Unbegrenzt", "Exakt auf die Lebenszeit des Urhebers", "20 Jahre ab Erstveröffentlichung", "50 Jahre ab Erschaffung", "70 Jahre nach Tod des Urhebers"],
+                correct: [4],
+                multi: false
+            },
+            {
+                question: "Was trifft auf eine 'oeffentliche Wiedergabe' zu? (Mehrfachauswahl)",
+                answers: ["Musik bei einer privaten Hochzeit ist erfasst.", "Musikspielen im Fitnessstudio ist erfasst.", "Public Viewing fällt darunter.", "Buchlesungen in einer öffentlichen Buchhandlung (z.B. Thalia) fallen darunter.", "Sie erfordert ein Publikum außerhalb des privaten Kreises."],
+                correct: [1, 2, 4],
+                multi: true
+            }
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let selectedAnswers = [];
+        let correctAnswers = 0;
+        let wrongQuestions = JSON.parse(localStorage.getItem('vzWrongQuestions') || '[]');
+        let answeredQuestions = JSON.parse(localStorage.getItem('vzAnsweredQuestions') || '{}');
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function updateStats() {
+            const total = questions.length;
+            const correct = Object.values(answeredQuestions).filter(v => v === true).length;
+            const wrong = Object.values(answeredQuestions).filter(v => v === false).length;
+            const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+            document.getElementById('totalQuestions').textContent = total;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('wrongCount').textContent = wrong;
+            document.getElementById('percentage').textContent = percentage + '%';
+
+            const wrongBtn = document.getElementById('wrongBtn');
+            wrongBtn.disabled = wrongQuestions.length === 0;
+        }
+
+        function startQuiz(mode) {
+            if (mode === 'wrong') {
+                if (wrongQuestions.length === 0) {
+                    alert('Keine falsch beantworteten Fragen vorhanden!');
+                    return;
+                }
+                currentQuestions = shuffleArray(wrongQuestions.map(i => ({...questions[i], originalIndex: i})));
+            } else {
+                currentQuestions = shuffleArray(questions.map((q, i) => ({...q, originalIndex: i})));
+            }
+
+            currentIndex = 0;
+            correctAnswers = 0;
+            selectedAnswers = [];
+
+            document.getElementById('quizArea').classList.remove('hidden');
+            document.getElementById('finalScore').classList.add('hidden');
+
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentIndex >= currentQuestions.length) {
+                showFinalScore();
+                return;
+            }
+
+            const q = currentQuestions[currentIndex];
+            const progress = ((currentIndex) / currentQuestions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            const container = document.getElementById('questionContainer');
+            const typeText = q.multi ? 'Mehrfachauswahl' : 'Einzelauswahl';
+
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number">Frage ${currentIndex + 1} / ${currentQuestions.length}</span>
+                        <span class="question-type">${typeText}</span>
+                    </div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="answers" id="answers">
+                        ${q.answers.map((a, i) => `
+                            <button class="answer-btn" data-index="${i}" onclick="selectAnswer(${i})">
+                                ${String.fromCharCode(97 + i)}) ${a}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button class="submit-btn" onclick="submitAnswer()" id="submitBtn" disabled>
+                        ${q.multi ? 'Antworten prüfen' : 'Antwort prüfen'}
+                    </button>
+                    <div id="resultMessage"></div>
+                </div>
+            `;
+
+            selectedAnswers = [];
+        }
+
+        function selectAnswer(index) {
+            const q = currentQuestions[currentIndex];
+            const btns = document.querySelectorAll('.answer-btn');
+
+            if (btns[0].classList.contains('disabled')) return;
+
+            if (q.multi) {
+                if (selectedAnswers.includes(index)) {
+                    selectedAnswers = selectedAnswers.filter(i => i !== index);
+                    btns[index].classList.remove('selected');
+                } else {
+                    selectedAnswers.push(index);
+                    btns[index].classList.add('selected');
+                }
+            } else {
+                selectedAnswers = [index];
+                btns.forEach((btn, i) => {
+                    btn.classList.toggle('selected', i === index);
+                });
+            }
+
+            document.getElementById('submitBtn').disabled = selectedAnswers.length === 0;
+        }
+
+        function submitAnswer() {
+            const q = currentQuestions[currentIndex];
+            const btns = document.querySelectorAll('.answer-btn');
+            const resultDiv = document.getElementById('resultMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            btns.forEach(btn => btn.classList.add('disabled'));
+
+            const isCorrect = arraysEqual(selectedAnswers.sort(), q.correct.sort());
+
+            q.correct.forEach(i => btns[i].classList.add('correct'));
+            selectedAnswers.forEach(i => {
+                if (!q.correct.includes(i)) {
+                    btns[i].classList.add('incorrect');
+                }
+            });
+
+            const origIndex = q.originalIndex;
+
+            if (isCorrect) {
+                correctAnswers++;
+                answeredQuestions[origIndex] = true;
+                wrongQuestions = wrongQuestions.filter(i => i !== origIndex);
+                resultDiv.innerHTML = '<div class="result-message correct">Richtig!</div>';
+            } else {
+                answeredQuestions[origIndex] = false;
+                if (!wrongQuestions.includes(origIndex)) {
+                    wrongQuestions.push(origIndex);
+                }
+                const correctText = q.correct.map(i => String.fromCharCode(97 + i)).join(', ');
+                resultDiv.innerHTML = `<div class="result-message incorrect">Falsch! Richtig: ${correctText}</div>`;
+            }
+
+            localStorage.setItem('vzWrongQuestions', JSON.stringify(wrongQuestions));
+            localStorage.setItem('vzAnsweredQuestions', JSON.stringify(answeredQuestions));
+            updateStats();
+
+            submitBtn.textContent = 'Weiter';
+            submitBtn.disabled = false;
+            submitBtn.onclick = nextQuestion;
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            showQuestion();
+        }
+
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            return a.every((val, i) => val === b[i]);
+        }
+
+        function showFinalScore() {
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('finalScore').classList.remove('hidden');
+            document.getElementById('progressFill').style.width = '100%';
+
+            const percentage = Math.round((correctAnswers / currentQuestions.length) * 100);
+            document.getElementById('finalScoreText').textContent = percentage + '%';
+
+            let message = '';
+            if (percentage === 100) {
+                message = 'Perfekt! Alle Fragen richtig!';
+            } else if (percentage >= 80) {
+                message = 'Sehr gut! Fast alles richtig!';
+            } else if (percentage >= 60) {
+                message = 'Gut! Aber es gibt noch Verbesserungspotential.';
+            } else if (percentage >= 40) {
+                message = 'Es gibt noch einiges zu lernen.';
+            } else {
+                message = 'Mehr üben empfohlen!';
+            }
+
+            document.getElementById('finalMessage').textContent =
+                `${correctAnswers} von ${currentQuestions.length} Fragen richtig. ${message}`;
+        }
+
+        function resetProgress() {
+            if (confirm('Wirklich alle Fortschritte zurücksetzen?')) {
+                localStorage.removeItem('vzWrongQuestions');
+                localStorage.removeItem('vzAnsweredQuestions');
+                wrongQuestions = [];
+                answeredQuestions = {};
+                updateStats();
+                document.getElementById('quizArea').classList.add('hidden');
+                document.getElementById('finalScore').classList.add('hidden');
+            }
+        }
+
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>
